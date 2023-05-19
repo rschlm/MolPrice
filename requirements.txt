@@ -1,0 +1,10 @@
+torch
+pytorch-lightning
+wandb
+rdkit
+ogb
+deepchem
+torch-geometric
+pyg_lib
+torch_scatter
+torch_sparse
