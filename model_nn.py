@@ -113,7 +113,7 @@ class MCULE_DATA(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ['mcule_purchasable_in_stock_prices_230324_RKoqmy_valid_smiles.csv']
+        return ['test.csv']
 
     @property
     def processed_file_names(self):
@@ -159,7 +159,7 @@ mean, std = mean.item(), std.item()
 # split data
 splitter = RandomSplitter()
 train_idx, valid_idx, test_idx = splitter.split(dataset, frac_train=0.7, frac_valid=0.1, frac_test=0.2)
-train_dataset = dataset[train_idx]
+train_dataset = dataset[np.ndarray(train_idx)]
 valid_dataset = dataset[valid_idx]
 test_dataset = dataset[test_idx]
 
