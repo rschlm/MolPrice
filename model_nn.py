@@ -104,7 +104,7 @@ class MPNN(pl.LightningModule):
         return DataLoader(self.test_data, batch_size=self.batch_size, shuffle=False)
 
 class MCULE_DATA(InMemoryDataset):
-    # ESOL dataset download link
+    # path to the data
     path_to_data = '/datasets/mcule_purchasable_in_stock_prices_230324_RKoqmy_valid_smiles.csv'
 
     def __init__(self, root, transform=None):
@@ -158,9 +158,9 @@ mean, std = mean.item(), std.item()
 
 # split data
 splitter = RandomSplitter()
-train_idx, valid_idx, test_idx = splitter.split(dataset, frac_train=0.7, frac_valid=0.1, frac_test=0.2)
-train_dataset = dataset[np.ndarray(train_idx)]
-valid_dataset = dataset[valid_idx]
-test_dataset = dataset[test_idx]
-
+train_idx, valid_idx, test_idx = splitter.split(dataset,frac_train=0.7, frac_valid=0.1, frac_test=0.2)
+train_dataset = dataset[list(train_idx)]
+valid_dataset = dataset[list(valid_idx)]
+test_dataset = dataset[list(test_idx)]
+print(train_idx)
 print('Everything is fine baby')
