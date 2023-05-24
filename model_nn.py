@@ -123,8 +123,8 @@ class MCULE_DATA(InMemoryDataset):
     def process(self):
         # load raw data from a csv file
         df = pd.read_csv(self.raw_paths[0])
-        smiles = df['SMILES'][0:200].values.tolist()
-        target = df['price 1 (USD)'][0:200].values.tolist()
+        smiles = df['SMILES'][0:10000].values.tolist()
+        target = df['price 1 (USD)'][0:10000].values.tolist()
 
         # Convert SMILES into graph data
         print('Converting SMILES strings into graphs...')
@@ -180,9 +180,14 @@ gnn_model = MPNN(
 )
 
 trainer = pl.Trainer(
-    max_epochs = 60,
+    max_epochs = 100,
 )
 
 trainer.fit(
     model=gnn_model,
 )
+
+results = trainer.test(ckpt_path="best")
+test_mse = results[0]["Test MSE"]
+test_rmse = test_mse ** 0.5
+print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
