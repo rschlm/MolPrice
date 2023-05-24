@@ -5,6 +5,9 @@ rdkit
 ogb
 deepchem
 torch-geometric
-pyg_lib
+torch_geometric
 torch_scatter
 torch_sparse
+streamlit
+jax
+jaxlib

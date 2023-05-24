@@ -33,13 +33,5 @@ with tab1:
     st.write('''Draw the molecule you want to predict the price from the Mcule database and click **Apply**''')
     molecule = st_ketcher(value='', key='molecule')
 
-    #read only a random subset of n_mols molecules from the .smi file
-    # mols = take_random_subset_mols(n_mols, random_seed)
-
-    #display molecules as rdkit mol objects
-    # mols_img = [Chem.MolFromSmiles(mol) for mol in mols]
-
-    #display images of molecules
-    #st.write('''#### Selected molecules from Mcule database''')
-    #img = Draw.MolsToGridImage(mols_img, molsPerRow=5, subImgSize=(200, 200))
-    #st.image(img, use_column_width=True)
+    if st.button('Apply'):
+        st.snow()
