@@ -113,7 +113,7 @@ class MCULE_DATA(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ['test.csv']
+        return ['mcule_purchasable_in_stock_prices_230324_RKoqmy_valid_smiles.csv']
 
     @property
     def processed_file_names(self):
@@ -123,8 +123,8 @@ class MCULE_DATA(InMemoryDataset):
     def process(self):
         # load raw data from a csv file
         df = pd.read_csv(self.raw_paths[0])
-        smiles = df['SMILES'].values.tolist()
-        target = df['price 1 (USD)'].values.tolist()
+        smiles = df['SMILES'][0:200].values.tolist()
+        target = df['price 1 (USD)'][0:200].values.tolist()
 
         # Convert SMILES into graph data
         print('Converting SMILES strings into graphs...')
@@ -145,22 +145,44 @@ class MCULE_DATA(InMemoryDataset):
         # save data
         torch.save(self.collate(data_list), self.processed_paths[0])
 
-
-
 # create dataset
+
+"""For the creation of file to work, you need to:
+- create a folder called 'raw' in the dataset folder containing your raw data: here the file cleaned of bad smiles
+- it will generate a folder called processed with the data
+- put random seed 0 to be consistent in the splitting
+- Argument of the MCULE_DATA class is the folder where you can find the raw folder
+"""
+
 dataset = MCULE_DATA('./datasets/').shuffle()
-
-# Normalize target to mean = 0 and std = 1.
-mean = dataset.data.y.mean()
-std = dataset.data.y.std()
-dataset.data.y = (dataset.data.y - mean) / std
-mean, std = mean.item(), std.item()
-
 # split data
 splitter = RandomSplitter()
 train_idx, valid_idx, test_idx = splitter.split(dataset,frac_train=0.7, frac_valid=0.1, frac_test=0.2)
 train_dataset = dataset[list(train_idx)]
 valid_dataset = dataset[list(valid_idx)]
 test_dataset = dataset[list(test_idx)]
-print(train_idx)
-print('Everything is fine baby')
+
+
+mean = dataset.data.y.mean()
+std = dataset.data.y.std()
+
+#training the model
+
+gnn_model = MPNN(
+    hidden_dim=80,
+    out_dim=1,
+    std=std,
+    train_data=train_dataset,
+    valid_data=valid_dataset,
+    test_data=test_dataset,
+    lr=0.001,
+    batch_size=64
+)
+
+trainer = pl.Trainer(
+    max_epochs = 60,
+)
+
+trainer.fit(
+    model=gnn_model,
+)
