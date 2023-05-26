@@ -29,6 +29,7 @@ random.seed(0)
 
 batch_size=64
 
+# Creating the model
 class MPNN(pl.LightningModule):
     def __init__(self, hidden_dim, out_dim,
                 train_data, valid_data, test_data,
@@ -172,6 +173,17 @@ std = dataset.data.y.std()
 
 #training the model
 
+#Connecting to weight and biases
+import wandb
+
+wandb.init(project="gnn-solubility",
+        config={
+            "batch_size": 64,
+            "learning_rate": 0.001,
+            "hidden_size": 80,
+            "max_epochs": 60
+        })
+
 gnn_model = MPNN(
     hidden_dim=80,
     out_dim=1,
@@ -182,9 +194,12 @@ gnn_model = MPNN(
     lr=0.001,
     batch_size=64
 )
+wandb_logger = WandbLogger()
 
 trainer = pl.Trainer(
     max_epochs = 200,
+    logger = wandb_logger
+
 )
 
 trainer.fit(
@@ -195,4 +210,3 @@ results = trainer.test(ckpt_path="best")
 test_mse = results[0]["Test MSE"]
 test_rmse = test_mse ** 0.5
 print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
-
