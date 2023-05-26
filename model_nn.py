@@ -27,6 +27,8 @@ torch.cuda.manual_seed(0)
 np.random.seed(0)
 random.seed(0)
 
+batch_size=64
+
 class MPNN(pl.LightningModule):
     def __init__(self, hidden_dim, out_dim,
                 train_data, valid_data, test_data,
@@ -71,20 +73,22 @@ class MPNN(pl.LightningModule):
         # Here we define the train loop.
         out = self.forward(batch, mode="train")
         loss = F.mse_loss(out, batch.y)
-        self.log("Train loss", loss)
+        #print(batch.y.shape)
+        self.log("Train loss", loss, batch_size=self.batch_size)
         return loss
     
     def validation_step(self, batch, batch_idx):
         # Define validation step. At the end of every epoch, this will be executed
         out = self.forward(batch, mode="valid")
         loss = F.mse_loss(out * self.std, batch.y * self.std)  # report MSE
-        self.log("Valid MSE", loss)
+        #print(f'validation{batch.y.shape}')
+        self.log("Valid MSE", loss, batch_size=self.batch_size)
         
     def test_step(self, batch, batch_idx):
         # What to do in test
         out = self.forward(batch, mode="test")
         loss = F.mse_loss(out * self.std, batch.y * self.std)  # report MSE
-        self.log("Test MSE", loss)
+        self.log("Test MSE", loss, batch_size=self.batch_size)
 
     def configure_optimizers(self):
         # Here we configure the optimization algorithm.
@@ -105,7 +109,7 @@ class MPNN(pl.LightningModule):
 
 class MCULE_DATA(InMemoryDataset):
     # path to the data
-    path_to_data = '/datasets/mcule_purchasable_in_stock_prices_230324_RKoqmy_valid_smiles.csv'
+    path_to_data = '/datasets/mcule_purchasable_in_stock_prices_valid_smiles.csv'
 
     def __init__(self, root, transform=None):
         super().__init__(root, transform)
@@ -113,7 +117,7 @@ class MCULE_DATA(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ['mcule_purchasable_in_stock_prices_230324_RKoqmy_valid_smiles.csv']
+        return ['mcule_purchasable_in_stock_prices_valid_smiles.csv']
 
     @property
     def processed_file_names(self):
@@ -180,7 +184,7 @@ gnn_model = MPNN(
 )
 
 trainer = pl.Trainer(
-    max_epochs = 100,
+    max_epochs = 200,
 )
 
 trainer.fit(
@@ -191,3 +195,4 @@ results = trainer.test(ckpt_path="best")
 test_mse = results[0]["Test MSE"]
 test_rmse = test_mse ** 0.5
 print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
+
