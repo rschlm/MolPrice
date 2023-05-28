@@ -128,8 +128,8 @@ class MCULE_DATA(InMemoryDataset):
     def process(self):
         # load raw data from a csv file
         df = pd.read_csv(self.raw_paths[0])
-        smiles = df['SMILES'][0:10000].values.tolist()
-        target = df['price 1 (USD)'][0:10000].values.tolist()
+        smiles = df['SMILES'].values.tolist()
+        target = df['price 1 (USD)'].values.tolist()
 
         # Convert SMILES into graph data
         print('Converting SMILES strings into graphs...')
