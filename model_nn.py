@@ -212,4 +212,4 @@ wandb.finish()
 test_mse = results[0]["Test MSE"]
 test_rmse = test_mse ** 0.5
 print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
-torch.save(gnn_model.state_dict(), 'gnn_model.pth')
+torch.save(gnn_model.state_dict(), 'gnn_model.pt')
