@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from deepchem.splits import RandomSplitter
+import wandb
 
 import torch.nn.functional as F
 from torch.nn import GRU
@@ -41,6 +42,7 @@ class MPNN(pl.LightningModule):
         self.test_data = test_data
         self.batch_size = batch_size
         self.lr = lr
+        self.loss= {'epoch': [], 'train_loss': [], 'val_loss':[]}
         # Initial layers
         self.atom_emb = AtomEncoder(emb_dim=hidden_dim)
         self.bond_emb = BondEncoder(emb_dim=hidden_dim)
@@ -175,6 +177,13 @@ std = dataset.data.y.std()
 
 #training the model
 
+wandb.init(project="molprice",
+        config={
+            "batch_size": 64,
+            "learning_rate": 0.001,
+            "hidden_size": 80,
+            "max_epochs": 60
+        })
 
 gnn_model = MPNN(
     hidden_dim=80,
@@ -190,12 +199,16 @@ gnn_model = MPNN(
 trainer = pl.Trainer(
     max_epochs = 1000,
 )
+wandb_logger = WandbLogger()
 
 trainer.fit(
     model=gnn_model,
+    logger=wandb_logger
 )
 
 results = trainer.test(ckpt_path="best")
+wandb.finish()
+
 test_mse = results[0]["Test MSE"]
 test_rmse = test_mse ** 0.5
 print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
