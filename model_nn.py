@@ -128,8 +128,8 @@ class MCULE_DATA(InMemoryDataset):
     def process(self):
         # load raw data from a csv file
         df = pd.read_csv(self.raw_paths[0])
-        smiles = df['SMILES'].values.tolist()
-        target = df['price 1 (USD)'].values.tolist()
+        smiles = df['SMILES'][0:100000].values.tolist()
+        target = df['price 1 (USD)'][0:100000].values.tolist()
 
         # Convert SMILES into graph data
         print('Converting SMILES strings into graphs...')
@@ -160,6 +160,8 @@ class MCULE_DATA(InMemoryDataset):
 """
 
 dataset = MCULE_DATA('./datasets/').shuffle()
+
+
 # split data
 splitter = RandomSplitter()
 train_idx, valid_idx, test_idx = splitter.split(dataset,frac_train=0.7, frac_valid=0.1, frac_test=0.2)
@@ -173,16 +175,6 @@ std = dataset.data.y.std()
 
 #training the model
 
-#Connecting to weight and biases
-import wandb
-
-wandb.init(project="gnn-solubility",
-        config={
-            "batch_size": 64,
-            "learning_rate": 0.001,
-            "hidden_size": 80,
-            "max_epochs": 60
-        })
 
 gnn_model = MPNN(
     hidden_dim=80,
@@ -194,12 +186,9 @@ gnn_model = MPNN(
     lr=0.001,
     batch_size=64
 )
-wandb_logger = WandbLogger()
 
 trainer = pl.Trainer(
-    max_epochs = 200,
-    logger = wandb_logger
-
+    max_epochs = 1000,
 )
 
 trainer.fit(
@@ -210,3 +199,4 @@ results = trainer.test(ckpt_path="best")
 test_mse = results[0]["Test MSE"]
 test_rmse = test_mse ** 0.5
 print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
+torch.save(gnn_model.state_dict(), 'gnn_model.pth')
