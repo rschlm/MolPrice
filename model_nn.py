@@ -42,7 +42,6 @@ class MPNN(pl.LightningModule):
         self.test_data = test_data
         self.batch_size = batch_size
         self.lr = lr
-        self.loss= {'epoch': [], 'train_loss': [], 'val_loss':[]}
         # Initial layers
         self.atom_emb = AtomEncoder(emb_dim=hidden_dim)
         self.bond_emb = BondEncoder(emb_dim=hidden_dim)
@@ -160,56 +159,56 @@ class MCULE_DATA(InMemoryDataset):
 - put random seed 0 to be consistent in the splitting
 - Argument of the MCULE_DATA class is the folder where you can find the raw folder
 """
-
-dataset = MCULE_DATA('./datasets/').shuffle()
-
-
-# split data
-splitter = RandomSplitter()
-train_idx, valid_idx, test_idx = splitter.split(dataset,frac_train=0.7, frac_valid=0.1, frac_test=0.2)
-train_dataset = dataset[list(train_idx)]
-valid_dataset = dataset[list(valid_idx)]
-test_dataset = dataset[list(test_idx)]
+if __name__=='__main__':
+    dataset = MCULE_DATA('./datasets/').shuffle()
 
 
-mean = dataset.data.y.mean()
-std = dataset.data.y.std()
+    # split data
+    splitter = RandomSplitter()
+    train_idx, valid_idx, test_idx = splitter.split(dataset,frac_train=0.7, frac_valid=0.1, frac_test=0.2)
+    train_dataset = dataset[list(train_idx)]
+    valid_dataset = dataset[list(valid_idx)]
+    test_dataset = dataset[list(test_idx)]
 
-#training the model
 
-wandb.init(project="molprice",
-        config={
-            "batch_size": 64,
-            "learning_rate": 0.001,
-            "hidden_size": 80,
-            "max_epochs": 60
-        })
+    mean = dataset.data.y.mean()
+    std = dataset.data.y.std()
 
-gnn_model = MPNN(
-    hidden_dim=80,
-    out_dim=1,
-    std=std,
-    train_data=train_dataset,
-    valid_data=valid_dataset,
-    test_data=test_dataset,
-    lr=0.001,
-    batch_size=64
-)
+    #training the model
 
-trainer = pl.Trainer(
-    max_epochs = 1000,
-)
-wandb_logger = WandbLogger()
+    wandb.init(project="molprice",
+            config={
+                "batch_size": 64,
+                "learning_rate": 0.001,
+                "hidden_size": 80,
+                "max_epochs": 60
+            })
 
-trainer.fit(
-    model=gnn_model,
-    logger=wandb_logger
-)
+    gnn_model = MPNN(
+        hidden_dim=80,
+        out_dim=1,
+        std=std,
+        train_data=train_dataset,
+        valid_data=valid_dataset,
+        test_data=test_dataset,
+        lr=0.001,
+        batch_size=64
+    )
 
-results = trainer.test(ckpt_path="best")
-wandb.finish()
+    trainer = pl.Trainer(
+        max_epochs = 1000,
+    )
+    wandb_logger = WandbLogger()
 
-test_mse = results[0]["Test MSE"]
-test_rmse = test_mse ** 0.5
-print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
-torch.save(gnn_model.state_dict(), 'gnn_model.pt')
+    trainer.fit(
+        model=gnn_model,
+        logger=wandb_logger
+    )
+
+    results = trainer.test(ckpt_path="best")
+    wandb.finish()
+
+    test_mse = results[0]["Test MSE"]
+    test_rmse = test_mse ** 0.5
+    print(f"\nMPNN model performance: RMSE on test set = {test_rmse:.4f}.\n")
+    torch.save(gnn_model.state_dict(), 'gnn_model.pt')
