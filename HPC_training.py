@@ -37,11 +37,14 @@ def generate_molecules(df) -> pd.DataFrame:
     """
     Generate molecules from the SMILES strings.
     """
-    df["Mol"] = df["SMILES"].apply(lambda x: Chem.MolFromSmiles(x))
+    df["mol"] = df["SMILES"].apply(lambda x: Chem.MolFromSmiles(x))
     return df
 
 
 def get_fingerprint(mol):
+    """
+    Get the fingerprint of a molecule.
+    """
     fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
     arr = np.zeros((1,))
     DataStructs.ConvertToNumpyArray(fp, arr)
@@ -52,8 +55,8 @@ def calculate_morgan_fp(df) -> pd.DataFrame:
     """
     Calculate the Morgan fingerprint for each molecule in the dataframe.
     """
-    df["morgan_fp"] = df["Mol"].apply(
-        lambda x: AllChem.GetMorganFingerprintAsBitVect(x, 2, nBits=2048))
+    df["morgan_fp"] = df["mol"].apply(
+        lambda x: AllChem.GetMorganFingerprintAsBitVect(x, 2, nBits=1024))
     return df
 
 
@@ -62,7 +65,7 @@ def calculate_Mordred_descriptors(df) -> pd.DataFrame:
     Calculate the Mordred descriptors for each molecule in the dataframe.
     """
     calc = Calculator(descriptors, ignore_3D=False)
-    df_features = df["Mol"].apply(lambda x: calc(x))
+    df_features = df["mol"].apply(lambda x: calc(x))
     return df_features
 
 
@@ -78,7 +81,7 @@ class MultipleLinearRegression(torch.nn.Module):
 
 
 def train_simplest_regre_net(df_X, df_y,
-                             seed, y_name="target", y_unit="", batch_size=32, lr=0.01, nb_epochs=100, print_epochs=True):
+                             seed, y_name="Price", y_unit="USD", batch_size=32, lr=0.01, nb_epochs=100, print_epochs=True):
     random.seed(seed)
     np.random.seed(seed)
     torch.random.manual_seed(seed)
@@ -187,25 +190,35 @@ def train_simplest_regre_net(df_X, df_y,
 
 if __name__ == "__main__":
     print("Loading dataset ...")
-    df = pd.read_csv(
-        "datasets/mcule_purchasable_in_stock_prices_valid_smiles.csv")
-    print("Dataset loaded")
+    # df = pd.read_csv(
+    #    "datasets/mcule_purchasable_in_stock_prices_valid_smiles.csv")
 
-    df_X = pd.read_csv("datasets/descriptors.csv")
+    # print("Dataset loaded")
+
+    df = pd.read_csv("datasets/mordred_descriptors.csv")
+    df_X = df[[k for k in df.columns if k != "price 1 (USD)"]]
+    # take the last columns
+    df_y = df["price 1 (USD)"]
+
+    # create molecules
+
+    # df["mol"] = df["SMILES"].apply(lambda x: Chem.MolFromSmiles(x))
+
+    # calculate the morgan fingerprints
+    # df = calculate_morgan_fp(df)
 
     # make a df with the target
-    df_y = df[["price 1 (USD)"]].astype(float)
+    # df_y = df[["price 1 (USD)"]].astype(float)
 
-    """
-    for fp_bit in range(2048):
-        df[f"fp_bit_{fp_bit}"] = df["morgan_fp"].apply(
-            lambda x: float(x[fp_bit]))
+    # for fp_bit in range(2048):
+    #    df[f"fp_bit_{fp_bit}"] = df["morgan_fp"].apply(
+    #        lambda x: float(x[fp_bit]))
 
-    df_X = df[[f"fp_bit_{fp_bit}" for fp_bit in range(2048)]]
-    """
+    # df_X = df[[f"fp_bit_{fp_bit}" for fp_bit in range(2048)]]
 
-    print(df_X)
-    print(df_y)
+    print(df_X.astype(dtype=float))
+    print(df_y.astype(dtype=float))
 
     # train the model
-    # train_simplest_regre_net(df_X, df_y, seed=0, y_name="price 1 (USD)", y_unit="USD", batch_size=32, lr=0.01, nb_epochs=100, print_epochs=True)
+    train_simplest_regre_net(df_X, df_y, seed=0, y_name="price 1 (USD)",
+                             y_unit="USD", batch_size=32, lr=0.01, nb_epochs=100, print_epochs=True)

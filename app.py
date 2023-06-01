@@ -21,7 +21,7 @@ model.load_state_dict(torch.load('gnn_model.pt'))
 model.eval()
 
 
-tab1 = st.tabs(['Input'])
+tab1, tab2 = st.tabs(['Input', 'About'])
 
 with tab1:
     st.write('### Draw your molecule of interest')

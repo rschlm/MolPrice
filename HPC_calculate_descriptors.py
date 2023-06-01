@@ -4,6 +4,7 @@ Calculate Morgan fp and Mordred descriptors, make ad dataframe and save it to a 
 
 
 from mordred import Calculator, descriptors
+from rdkit.Chem import AllChem
 import rdkit.Chem as Chem
 import pandas as pd
 import numpy as np
@@ -21,7 +22,7 @@ def calculate_Mordred_descriptors(df) -> pd.DataFrame:
     """
     Calculate the Mordred descriptors for each molecule in the dataframe.
     """
-    calc = Calculator(descriptors, ignore_3D=True)
+    calc = Calculator(descriptors, ignore_3D=False)
     df_X = calc.pandas(df["Mol"])
 
     df_X = df_X.astype(float).fillna(0)
@@ -51,10 +52,16 @@ if __name__ == "__main__":
         "datasets/mcule_purchasable_in_stock_prices_valid_smiles.csv")
     print("Dataset loaded")
 
+    # randomize the dataset
+    df = df.sample(frac=1, random_state=0)
+
+    df = df[:1000]
+
     new_df = generate_molecules(df)
     print("Molecules generated")
 
     df_features = calculate_Mordred_descriptors(new_df)
+    df_features["price 1 (USD)"] = df["price 1 (USD)"]
     # df_features = calculate_Morgan_fp(new_df)
     print("Descriptors calculated")
     df_features.to_csv("datasets/mordred_descriptors.csv", index=False)
