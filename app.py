@@ -4,21 +4,21 @@ Made by Loïc Bassement, Rémi Schlama, Gabor Dienes, Leander Choudhury.
 Spring 2023.
 """
 
-
 import torch
 from ogb.utils import smiles2graph
 from torch_geometric.data import Data
 from model_nn import MPNN, MCULE_DATA
-import pytorch_lightning as pl
-import numpy as np
-import random
-from deepchem.splits import RandomSplitter
-
 import streamlit as st
 from streamlit_ketcher import st_ketcher
 
 st.title("MolPrice")
 st.write("MolPrice is a tool to predict the price of a molecule based on the structure.")
+
+# Load the pretrained model
+model = MPNN(hidden_dim=80, out_dim=1, std=std, train_data=None,
+             valid_data=None, test_data=None, lr=0.001, batch_size=64)
+model.load_state_dict(torch.load('gnn_model.pt'))
+model.eval()
 
 n_mols = st.sidebar.number_input('Number of molecules from catalogue', min_value=1, max_value=500, value=10, step=1,
                                  help='Number of molecules to select from Mcule database')
@@ -36,7 +36,6 @@ with tab1:
 
     if st.button('Apply'):
         # Process the input molecule
-
         smiles = str(molecule)
         graph = smiles2graph(smiles)
         x = torch.tensor(graph['node_feat'], dtype=torch.long)
@@ -44,23 +43,13 @@ with tab1:
         edge_attr = torch.tensor(graph['edge_feat'], dtype=torch.long)
         data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
-        # Load the model and make predictions
-        model = MPNN(hidden_dim=80,
-                     out_dim=1,
-                     std=std,
-                     train_data=train_dataset,
-                     valid_data=valid_dataset,
-                     test_data=test_dataset,
-                     lr=0.001,
-                     batch_size=64)
-        model.load_state_dict(torch.load('gnn_model.pt'))
-        model.eval()
+        # Make predictions
         with torch.no_grad():
             output = model(data)
 
         # Display the output
         predicted_price = output.item()
-        st.write(f'Predicted Price: {predicted_price}')
+        st.write(f'Predicted Price: {predicted_price:.4f}')
 
 with tab2:
     # Add the desired output components
