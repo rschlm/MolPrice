@@ -15,19 +15,13 @@ st.title("MolPrice")
 st.write("MolPrice is a tool to predict the price of a molecule based on the structure.")
 
 # Load the pretrained model
-model = MPNN(hidden_dim=80, out_dim=1, std=std, train_data=None,
+model = MPNN(hidden_dim=80, out_dim=1, std=42, train_data=None,
              valid_data=None, test_data=None, lr=0.001, batch_size=64)
 model.load_state_dict(torch.load('gnn_model.pt'))
 model.eval()
 
-n_mols = st.sidebar.number_input('Number of molecules from catalogue', min_value=1, max_value=500, value=10, step=1,
-                                 help='Number of molecules to select from Mcule database')
 
-random_seed = st.sidebar.number_input('Random seed', min_value=1, max_value=100, value=33, step=1,
-                                      help='Random seed to select molecules from Mcule database')
-
-
-tab1, tab2 = st.tabs(['Input', 'Output'])
+tab1 = st.tabs(['Input'])
 
 with tab1:
     st.write('### Draw your molecule of interest')
@@ -35,7 +29,7 @@ with tab1:
     molecule = st_ketcher(value='', key='molecule')
 
     if st.button('Apply'):
-        # Process the input molecule
+
         smiles = str(molecule)
         graph = smiles2graph(smiles)
         x = torch.tensor(graph['node_feat'], dtype=torch.long)
@@ -43,14 +37,8 @@ with tab1:
         edge_attr = torch.tensor(graph['edge_feat'], dtype=torch.long)
         data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
 
-        # Make predictions
         with torch.no_grad():
             output = model(data)
 
-        # Display the output
         predicted_price = output.item()
         st.write(f'Predicted Price: {predicted_price:.4f}')
-
-with tab2:
-    # Add the desired output components
-    pass
